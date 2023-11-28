@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dotted_border/dotted_border.dart';
@@ -9,17 +10,19 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/MenuController.dart';
+import '../providers/imagepath_provider.dart';
 import '../responsive.dart';
 import '../services/utils.dart';
 import '../widgets/buttons.dart';
 import '../widgets/header.dart';
+import '../widgets/image_picker.dart';
 import '../widgets/side_menu.dart';
 import '../widgets/text_widget.dart';
 
 class UploadProductForm extends StatefulWidget {
   static const routeName = '/UploadProductForm';
 
-  const UploadProductForm({Key? key}) : super(key: key);
+  const UploadProductForm({super.key});
 
   @override
   _UploadProductFormState createState() => _UploadProductFormState();
@@ -28,16 +31,19 @@ class UploadProductForm extends StatefulWidget {
 class _UploadProductFormState extends State<UploadProductForm> {
   final _formKey = GlobalKey<FormState>();
   String _catValue = 'Vegetables';
-  late final TextEditingController _titleController, _priceController;
+  late final TextEditingController _titleController,
+      _priceController,
+      _descriptionController;
   int _groupValue = 1;
   bool isPiece = false;
   File? _pickedImage;
   Uint8List webImage = Uint8List(8);
+  ImagePathProvider imagePathProvider = ImagePathProvider();
   @override
   void initState() {
     _priceController = TextEditingController();
     _titleController = TextEditingController();
-
+    _descriptionController = TextEditingController();
     super.initState();
   }
 
@@ -45,6 +51,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
   void dispose() {
     _priceController.dispose();
     _titleController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -53,14 +60,11 @@ class _UploadProductFormState extends State<UploadProductForm> {
   }
 
   void _clearForm() {
-    isPiece = false;
     _groupValue = 1;
     _priceController.clear();
     _titleController.clear();
-    setState(() {
-      _pickedImage = null;
-      webImage = Uint8List(8);
-    });
+    _descriptionController.clear();
+    imagePathProvider.clearImages();
   }
 
   @override
@@ -113,7 +117,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
                     height: 25,
                   ),
                   Container(
-                    width: size.width > 650 ? 650 : size.width,
+                    width: size.width > 650 ? 800 : size.width,
                     color: Theme.of(context).cardColor,
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.all(16),
@@ -178,14 +182,15 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                           },
                                           inputFormatters: <TextInputFormatter>[
                                             FilteringTextInputFormatter.allow(
-                                                RegExp(r'[0-9.]')),
+                                              RegExp(r'[0-9.]'),
+                                            ),
                                           ],
                                           decoration: inputDecoration,
                                         ),
                                       ),
                                       const SizedBox(height: 20),
                                       TextWidget(
-                                        text: 'Porduct category*',
+                                        text: 'Product category*',
                                         color: color,
                                         isTitle: true,
                                       ),
@@ -196,109 +201,96 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       const SizedBox(
                                         height: 20,
                                       ),
-                                      TextWidget(
-                                        text: 'Measure unit*',
-                                        color: color,
-                                        isTitle: true,
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      // Radio button code here
-                                      Row(
-                                        children: [
-                                          TextWidget(
-                                            text: 'KG',
-                                            color: color,
-                                          ),
-                                          Radio(
-                                            value: 1,
-                                            groupValue: _groupValue,
-                                            onChanged: (valuee) {
-                                              setState(() {
-                                                _groupValue = 1;
-                                                isPiece = false;
-                                              });
-                                            },
-                                            activeColor: Colors.green,
-                                          ),
-                                          TextWidget(
-                                            text: 'Piece',
-                                            color: color,
-                                          ),
-                                          Radio(
-                                            value: 2,
-                                            groupValue: _groupValue,
-                                            onChanged: (valuee) {
-                                              setState(() {
-                                                _groupValue = 2;
-                                                isPiece = true;
-                                              });
-                                            },
-                                            activeColor: Colors.green,
-                                          ),
-                                        ],
-                                      )
                                     ],
                                   ),
                                 ),
                               ),
                               // Image to be picked code is here
-                              Expanded(
+                              const Expanded(
                                 flex: 4,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Container(
-                                      height: size.width > 650
-                                          ? 350
-                                          : size.width * 0.45,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .scaffoldBackgroundColor,
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
-                                      ),
-                                      child: _pickedImage == null
-                                          ? dottedBorder(color: color)
-                                          : ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              child: kIsWeb
-                                                  ? Image.memory(webImage,
-                                                      fit: BoxFit.fill)
-                                                  : Image.file(_pickedImage!,
-                                                      fit: BoxFit.fill),
-                                            )),
+                                child: ImagePickerWidget(
+                                  width: 350,
                                 ),
                               ),
                               Expanded(
-                                  flex: 1,
-                                  child: FittedBox(
-                                    child: Column(
-                                      children: [
-                                        TextButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              _pickedImage = null;
-                                              webImage = Uint8List(8);
-                                            });
-                                          },
-                                          child: TextWidget(
-                                            text: 'Clear',
-                                            color: Colors.red,
-                                          ),
+                                flex: 1,
+                                child: FittedBox(
+                                  child: Column(
+                                    children: [
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            _pickedImage = null;
+                                            webImage = Uint8List(8);
+                                          });
+                                        },
+                                        child: TextWidget(
+                                          text: 'Clear',
+                                          color: Colors.red,
                                         ),
-                                        TextButton(
-                                          onPressed: () {},
-                                          child: TextWidget(
-                                            text: 'Update image',
-                                            color: Colors.blue,
-                                          ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {},
+                                        child: TextWidget(
+                                          text: 'Update image',
+                                          color: Colors.blue,
                                         ),
-                                      ],
-                                    ),
-                                  )),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          TextWidget(
+                            text: 'Other Images*',
+                            color: color,
+                            isTitle: true,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 8),
+                            child: SizedBox(
+                              height: 250,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: 4,
+                                itemBuilder: (context, index) {
+                                  return const SizedBox(
+                                    height: 180,
+                                    width: 180,
+                                    child: ImagePickerWidget(
+                                      width: 180,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          TextWidget(
+                            text: 'Description*',
+                            color: color,
+                            isTitle: true,
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          TextFormField(
+                            maxLines: 5,
+                            maxLength: 600,
+                            controller: _descriptionController,
+                            key: const ValueKey('Description'),
+                            validator: (value) {
+                              if (value!.isEmpty) {
+                                return 'Please enter a description';
+                              }
+                              return null;
+                            },
+                            decoration: inputDecoration,
                           ),
                           Padding(
                             padding: const EdgeInsets.all(18.0),
@@ -345,7 +337,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
           _pickedImage = selected;
         });
       } else {
-        print('No image has been picked');
+        log('No image has been picked');
       }
     } else if (kIsWeb) {
       final ImagePicker picker = ImagePicker();
@@ -357,10 +349,10 @@ class _UploadProductFormState extends State<UploadProductForm> {
           _pickedImage = File('a');
         });
       } else {
-        print('No image has been picked');
+        log('No image has been picked');
       }
     } else {
-      print('Something went wrong');
+      log('Something went wrong');
     }
   }
 
@@ -370,34 +362,36 @@ class _UploadProductFormState extends State<UploadProductForm> {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: DottedBorder(
-          dashPattern: const [6.7],
-          borderType: BorderType.RRect,
-          color: color,
-          radius: const Radius.circular(12),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.image_outlined,
-                  color: color,
-                  size: 50,
+        dashPattern: const [6.7],
+        borderType: BorderType.RRect,
+        color: color,
+        radius: const Radius.circular(12),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.image_outlined,
+                color: color,
+                size: 50,
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              TextButton(
+                onPressed: (() {
+                  _pickImage();
+                }),
+                child: TextWidget(
+                  text: 'Choose an image',
+                  color: Colors.blue,
                 ),
-                const SizedBox(
-                  height: 20,
-                ),
-                TextButton(
-                    onPressed: (() {
-                      _pickImage();
-                    }),
-                    child: TextWidget(
-                      text: 'Choose an image',
-                      color: Colors.blue,
-                    ))
-              ],
-            ),
-          )),
+              )
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -408,59 +402,60 @@ class _UploadProductFormState extends State<UploadProductForm> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
+          child: DropdownButton<String>(
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+            value: _catValue,
+            onChanged: (value) {
+              setState(() {
+                _catValue = value!;
+              });
+              log(_catValue);
+            },
+            hint: const Text('Select a category'),
+            items: const [
+              DropdownMenuItem(
+                value: 'Vegetables',
+                child: Text(
+                  'Vegetables',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Fruits',
+                child: Text(
+                  'Fruits',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Grains',
+                child: Text(
+                  'Grains',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Nuts',
+                child: Text(
+                  'Nuts',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Herbs',
+                child: Text(
+                  'Herbs',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Spices',
+                child: Text(
+                  'Spices',
+                ),
+              )
+            ],
           ),
-          value: _catValue,
-          onChanged: (value) {
-            setState(() {
-              _catValue = value!;
-            });
-            print(_catValue);
-          },
-          hint: const Text('Select a category'),
-          items: const [
-            DropdownMenuItem(
-              value: 'Vegetables',
-              child: Text(
-                'Vegetables',
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Fruits',
-              child: Text(
-                'Fruits',
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Grains',
-              child: Text(
-                'Grains',
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Nuts',
-              child: Text(
-                'Nuts',
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Herbs',
-              child: Text(
-                'Herbs',
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Spices',
-              child: Text(
-                'Spices',
-              ),
-            )
-          ],
-        )),
+        ),
       ),
     );
   }
