@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:laza_web_admin_panel/firebase_options.dart';
+import 'package:laza_web_admin_panel/providers/imagepath_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'consts/theme_data.dart';
@@ -49,6 +50,9 @@ class _MyAppState extends State<MyApp> {
           create: (_) {
             return themeChangeProvider;
           },
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ImagePathProvider(),
         ),
       ],
       child: Consumer<DarkThemeProvider>(
