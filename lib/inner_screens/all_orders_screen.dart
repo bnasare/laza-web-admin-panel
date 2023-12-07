@@ -8,7 +8,7 @@ import '../widgets/orders_list.dart';
 import '../widgets/side_menu.dart';
 
 class AllOrdersScreen extends StatefulWidget {
-  const AllOrdersScreen({Key? key}) : super(key: key);
+  const AllOrdersScreen({super.key});
 
   @override
   State<AllOrdersScreen> createState() => _AllOrdersScreenState();
@@ -51,8 +51,8 @@ class _AllOrdersScreenState extends State<AllOrdersScreen> {
                         height: 20,
                       ),
                       const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: OrdersList(),
+                        padding: EdgeInsets.all(12.0),
+                        child: OrdersList(isInDashboard: false),
                       ),
                     ],
                   ),

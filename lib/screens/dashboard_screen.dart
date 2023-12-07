@@ -13,7 +13,7 @@ import '../widgets/orders_list.dart';
 import '../widgets/text_widget.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,7 @@ class DashboardScreen extends StatelessWidget {
                           childAspectRatio: size.width < 1400 ? 0.8 : 1.05,
                         ),
                       ),
-                      const OrdersList(),
+                      const OrdersList(isInDashboard: true)
                     ],
                   ),
                 ),
