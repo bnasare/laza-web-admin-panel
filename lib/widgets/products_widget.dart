@@ -3,16 +3,20 @@ import 'package:flutter/material.dart';
 import '../services/utils.dart';
 import 'text_widget.dart';
 
-class ProductWidget extends StatefulWidget {
+class ProductWidget extends StatelessWidget {
   const ProductWidget({
     Key? key,
+    required this.name,
+    required this.price,
+    required this.imagePath,
+    required this.brand,
   }) : super(key: key);
 
-  @override
-  _ProductWidgetState createState() => _ProductWidgetState();
-}
+  final String name;
+  final double price;
+  final String imagePath;
+  final String brand;
 
-class _ProductWidgetState extends State<ProductWidget> {
   @override
   Widget build(BuildContext context) {
     Size size = Utils(context).getScreenSize;
@@ -39,8 +43,8 @@ class _ProductWidgetState extends State<ProductWidget> {
                     Flexible(
                       flex: 3,
                       child: Image.network(
-                        'https://www.lifepng.com/wp-content/uploads/2020/11/Apricot-Large-Single-png-hd.png',
-                        fit: BoxFit.fill,
+                        imagePath,
+                        fit: BoxFit.contain,
                         // width: screenWidth * 0.12,
                         height: size.width * 0.12,
                       ),
@@ -50,16 +54,16 @@ class _ProductWidgetState extends State<ProductWidget> {
                         itemBuilder: (context) => [
                               PopupMenuItem(
                                 onTap: () {},
-                                child: Text('Edit'),
                                 value: 1,
+                                child: const Text('Edit'),
                               ),
                               PopupMenuItem(
                                 onTap: () {},
-                                child: Text(
+                                value: 2,
+                                child: const Text(
                                   'Delete',
                                   style: TextStyle(color: Colors.red),
                                 ),
-                                value: 2,
                               ),
                             ])
                   ],
@@ -70,26 +74,15 @@ class _ProductWidgetState extends State<ProductWidget> {
                 Row(
                   children: [
                     TextWidget(
-                      text: '\$1.99',
+                      text: '\$$price.00',
                       color: color,
-                      textSize: 18,
+                      textSize: 12,
                     ),
-                    const SizedBox(
-                      width: 7,
-                    ),
-                    Visibility(
-                        visible: true,
-                        child: Text(
-                          '\$3.89',
-                          style: TextStyle(
-                              decoration: TextDecoration.lineThrough,
-                              color: color),
-                        )),
                     const Spacer(),
                     TextWidget(
-                      text: '1Kg',
+                      text: brand,
                       color: color,
-                      textSize: 18,
+                      textSize: 12,
                     ),
                   ],
                 ),
@@ -97,9 +90,9 @@ class _ProductWidgetState extends State<ProductWidget> {
                   height: 2,
                 ),
                 TextWidget(
-                  text: 'Title',
+                  text: name,
                   color: color,
-                  textSize: 24,
+                  textSize: 18,
                   isTitle: true,
                 ),
               ],

@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../consts/constants.dart';
 import '../controllers/MenuController.dart';
 import '../inner_screens/add_prod.dart';
+import '../models/product_model.dart';
+import '../providers/product_provider.dart';
 import '../responsive.dart';
 import '../services/utils.dart';
 import '../widgets/buttons.dart';
@@ -19,6 +21,10 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Size size = Utils(context).getScreenSize;
     Color color = Utils(context).color;
+    final ProductProvider productProvider =
+        Provider.of<ProductProvider>(context, listen: false);
+    productProvider.getProducts();
+    final List<ProductModel> products = productProvider.products;
     return SafeArea(
       child: SingleChildScrollView(
         controller: ScrollController(),
@@ -82,9 +88,11 @@ class DashboardScreen extends StatelessWidget {
                           crossAxisCount: size.width < 650 ? 2 : 4,
                           childAspectRatio:
                               size.width < 650 && size.width > 350 ? 1.1 : 0.8,
+                          products: products,
                         ),
                         desktop: ProductGridWidget(
                           childAspectRatio: size.width < 1400 ? 0.8 : 1.05,
+                          products: products,
                         ),
                       ),
                       const OrdersList(isInDashboard: true)
