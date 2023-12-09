@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ImagePathProvider with ChangeNotifier {
   String _imagePath = '';
-  final List<String> _imagePaths = [];
+  List<String> _imagePaths = [];
 
   String get getImagePath => _imagePath;
   List<String> get getImagePaths => _imagePaths;
@@ -12,8 +12,16 @@ class ImagePathProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  set setImagePathList(String value) {
-    _imagePaths.add(value);
+
+  void setImagePathList(String value, int index) {
+    if (index < _imagePaths.length) {
+      _imagePaths[index] = value;
+    } else {
+      for (int i = _imagePaths.length; i <= index; i++) {
+        _imagePaths.add('');
+      }
+      _imagePaths[index] = value;
+    }
     notifyListeners();
   }
 

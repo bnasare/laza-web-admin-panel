@@ -1,13 +1,12 @@
 import 'dart:developer';
-import 'dart:io';
 
-import 'package:dotted_border/dotted_border.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconly/iconly.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 import '../controllers/MenuController.dart';
 import '../providers/imagepath_provider.dart';
@@ -30,15 +29,14 @@ class UploadProductForm extends StatefulWidget {
 
 class _UploadProductFormState extends State<UploadProductForm> {
   final _formKey = GlobalKey<FormState>();
-  String _catValue = 'Vegetables';
+  String _catValue = 'Male';
+  String _brandValue = 'Nike';
   late final TextEditingController _titleController,
       _priceController,
       _descriptionController;
-  int _groupValue = 1;
   bool isPiece = false;
-  File? _pickedImage;
   Uint8List webImage = Uint8List(8);
-  ImagePathProvider imagePathProvider = ImagePathProvider();
+
   @override
   void initState() {
     _priceController = TextEditingController();
@@ -55,23 +53,44 @@ class _UploadProductFormState extends State<UploadProductForm> {
     super.dispose();
   }
 
-  void _uploadForm() async {
-    final isValid = _formKey.currentState!.validate();
-  }
-
-  void _clearForm() {
-    _groupValue = 1;
-    _priceController.clear();
-    _titleController.clear();
-    _descriptionController.clear();
-    imagePathProvider.clearImages();
-  }
-
   @override
   Widget build(BuildContext context) {
     final color = Utils(context).color;
     final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
     Size size = Utils(context).getScreenSize;
+    final ImagePathProvider imagePathProvider =
+        Provider.of<ImagePathProvider>(context, listen: false);
+
+    Future<void> uploadToFirebase() async {
+      try {
+        final String uuid = const Uuid().v4();
+        final List<String> imagePathList = imagePathProvider.getImagePaths;
+        await FirebaseFirestore.instance.collection('products').doc(uuid).set({
+          'id': uuid,
+          'name': _titleController.text,
+          'price': double.parse(_priceController.text),
+          'category': _catValue,
+          'brand': _brandValue,
+          'description': _descriptionController.text,
+          'imagePaths': imagePathList,
+        });
+        log('Uploaded');
+      } catch (error) {
+        log('Error: $error');
+      }
+    }
+
+    void uploadForm() async {
+      final isValid = _formKey.currentState!.validate();
+      await uploadToFirebase();
+    }
+
+    void clearForm() {
+      _priceController.clear();
+      _titleController.clear();
+      _descriptionController.clear();
+      imagePathProvider.clearImages();
+    }
 
     var inputDecoration = InputDecoration(
       filled: true,
@@ -197,7 +216,15 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       const SizedBox(height: 10),
                                       // Drop down menu code here
                                       _categoryDropDown(),
-
+                                      const SizedBox(
+                                        height: 20,
+                                      ),TextWidget(
+                                        text: 'Product brand*',
+                                        color: color,
+                                        isTitle: true,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      _brandDropDown(),
                                       const SizedBox(
                                         height: 20,
                                       ),
@@ -206,10 +233,12 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                 ),
                               ),
                               // Image to be picked code is here
-                              const Expanded(
+                              Expanded(
                                 flex: 4,
                                 child: ImagePickerWidget(
                                   width: 350,
+                                  index: 0,
+                                  imagePathProvider: imagePathProvider,
                                 ),
                               ),
                               Expanded(
@@ -220,7 +249,6 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       TextButton(
                                         onPressed: () {
                                           setState(() {
-                                            _pickedImage = null;
                                             webImage = Uint8List(8);
                                           });
                                         },
@@ -260,11 +288,13 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: 4,
                                 itemBuilder: (context, index) {
-                                  return const SizedBox(
+                                  return SizedBox(
                                     height: 180,
                                     width: 180,
                                     child: ImagePickerWidget(
                                       width: 180,
+                                      index: index + 1,
+                                      imagePathProvider: imagePathProvider,
                                     ),
                                   );
                                 },
@@ -298,14 +328,14 @@ class _UploadProductFormState extends State<UploadProductForm> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 ButtonsWidget(
-                                  onPressed: _clearForm,
+                                  onPressed: clearForm,
                                   text: 'Clear form',
                                   icon: IconlyBold.danger,
                                   backgroundColor: Colors.red.shade300,
                                 ),
                                 ButtonsWidget(
                                   onPressed: () {
-                                    _uploadForm();
+                                    uploadForm();
                                   },
                                   text: 'Upload',
                                   icon: IconlyBold.upload,
@@ -327,74 +357,6 @@ class _UploadProductFormState extends State<UploadProductForm> {
     );
   }
 
-  Future<void> _pickImage() async {
-    if (!kIsWeb) {
-      final ImagePicker picker = ImagePicker();
-      XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        var selected = File(image.path);
-        setState(() {
-          _pickedImage = selected;
-        });
-      } else {
-        log('No image has been picked');
-      }
-    } else if (kIsWeb) {
-      final ImagePicker picker = ImagePicker();
-      XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        var f = await image.readAsBytes();
-        setState(() {
-          webImage = f;
-          _pickedImage = File('a');
-        });
-      } else {
-        log('No image has been picked');
-      }
-    } else {
-      log('Something went wrong');
-    }
-  }
-
-  Widget dottedBorder({
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: DottedBorder(
-        dashPattern: const [6.7],
-        borderType: BorderType.RRect,
-        color: color,
-        radius: const Radius.circular(12),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.image_outlined,
-                color: color,
-                size: 50,
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              TextButton(
-                onPressed: (() {
-                  _pickImage();
-                }),
-                child: TextWidget(
-                  text: 'Choose an image',
-                  color: Colors.blue,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _categoryDropDown() {
     final color = Utils(context).color;
     return Container(
@@ -409,50 +371,97 @@ class _UploadProductFormState extends State<UploadProductForm> {
               fontSize: 18,
             ),
             value: _catValue,
-            onChanged: (value) {
+            onChanged: (catValue) {
               setState(() {
-                _catValue = value!;
+                _catValue = catValue!;
               });
               log(_catValue);
             },
             hint: const Text('Select a category'),
             items: const [
               DropdownMenuItem(
-                value: 'Vegetables',
+                value: 'Male',
                 child: Text(
-                  'Vegetables',
+                  'Male',
                 ),
               ),
               DropdownMenuItem(
-                value: 'Fruits',
+                value: 'Female',
                 child: Text(
-                  'Fruits',
+                  'Female',
                 ),
               ),
               DropdownMenuItem(
-                value: 'Grains',
+                value: 'Unisex',
                 child: Text(
-                  'Grains',
+                  'Unisex',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _brandDropDown() {
+    final color = Utils(context).color;
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+            ),
+            value: _brandValue,
+            onChanged: (value) {
+              setState(() {
+                _brandValue = value!;
+              });
+              log(_brandValue);
+            },
+            hint: const Text('Select a category'),
+            items: const [
+              DropdownMenuItem(
+                value: 'Nike',
+                child: Text(
+                  'Nike',
                 ),
               ),
               DropdownMenuItem(
-                value: 'Nuts',
+                value: 'Adidas',
                 child: Text(
-                  'Nuts',
+                  'Adidas',
                 ),
               ),
               DropdownMenuItem(
-                value: 'Herbs',
+                value: 'Fila',
                 child: Text(
-                  'Herbs',
+                  'Fila',
                 ),
               ),
               DropdownMenuItem(
-                value: 'Spices',
+                value: 'Jordan',
                 child: Text(
-                  'Spices',
+                  'Jordan',
                 ),
-              )
+              ),
+              DropdownMenuItem(
+                value: 'Puma',
+                child: Text(
+                  'Puma',
+                ),
+              ),
+              DropdownMenuItem(
+                value: 'Under Armour',
+                child: Text(
+                  'UnderArmour',
+                ),
+              ),
             ],
           ),
         ),
