@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,9 +12,13 @@ class ImagePickerWidget extends StatefulWidget {
   const ImagePickerWidget({
     super.key,
     required this.width,
+    required this.index,
+    required this.imagePathProvider,
   });
 
   final double width;
+  final int index;
+  final ImagePathProvider imagePathProvider;
 
   @override
   State<ImagePickerWidget> createState() => _ImagePickerWidgetState();
@@ -24,20 +29,24 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   File? productImage;
   Uint8List webImage = Uint8List(8);
   String imagePath = '';
-  ImagePathProvider imagePathProvider = ImagePathProvider();
 
   Future<void> pickImage() async {
     if (!kIsWeb) {
       final ImagePicker imagePicker = ImagePicker();
       XFile? image = await imagePicker.pickImage(source: ImageSource.gallery);
       if (image != null) {
+        File? imageFile = File(image.path);
+        String fileName = DateTime.now().millisecondsSinceEpoch.toString();
+        final Reference storageReference =
+            FirebaseStorage.instance.ref().child('products/$fileName');
+        final UploadTask uploadTask = storageReference.putFile(imageFile);
+        final String url = await (await uploadTask).ref.getDownloadURL();
         setState(() {
           selectedImage = File(image.path);
           productImage = selectedImage;
-          imagePath = image.path;
-          imagePathProvider.setImagePath = imagePath;
-          imagePathProvider.setImagePathList = imagePath;
+          imagePath = url;
         });
+        widget.imagePathProvider.setImagePathList(imagePath, widget.index);
       } else {
         log('No image has been picked');
       }
@@ -46,13 +55,17 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       XFile? image = await imagePicker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         Uint8List f = await image.readAsBytes();
+        var now = DateTime.now().millisecondsSinceEpoch;
+        Reference reference =
+            FirebaseStorage.instance.ref().child("products/$now");
+        final UploadTask uploadTask = reference.putData(f);
+        final String url = await (await uploadTask).ref.getDownloadURL();
         setState(() {
           selectedImage = f;
           webImage = selectedImage;
-          imagePath = image.path;
-          imagePathProvider.setImagePath = imagePath;
-          imagePathProvider.setImagePathList = imagePath;
+          imagePath = url;
         });
+        widget.imagePathProvider.setImagePathList(imagePath, widget.index);
       } else {
         log('No image has been picked');
       }
@@ -85,11 +98,11 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                     child: kIsWeb
                         ? Image.memory(
                             webImage,
-                            fit: BoxFit.contain,
+                            fit: BoxFit.cover,
                           )
                         : Image.file(
                             productImage!,
-                            fit: BoxFit.contain,
+                            fit: BoxFit.cover,
                           ),
                   )
                 : DottedBorder(
