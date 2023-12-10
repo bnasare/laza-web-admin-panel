@@ -33,6 +33,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
   String _brandValue = 'Nike';
   late final TextEditingController _titleController,
       _priceController,
+      _idController,
       _descriptionController;
   bool isPiece = false;
   Uint8List webImage = Uint8List(8);
@@ -42,6 +43,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
     _priceController = TextEditingController();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
+    _idController = TextEditingController();
     super.initState();
   }
 
@@ -50,6 +52,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
     _priceController.dispose();
     _titleController.dispose();
     _descriptionController.dispose();
+    _idController.dispose();
     super.dispose();
   }
 
@@ -66,7 +69,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
         final String uuid = const Uuid().v4();
         final List<String> imagePathList = imagePathProvider.getImagePaths;
         await FirebaseFirestore.instance.collection('products').doc(uuid).set({
-          'id': uuid,
+          'id': _idController.text,
           'name': _titleController.text,
           'price': double.parse(_priceController.text),
           'category': _catValue,
@@ -89,6 +92,7 @@ class _UploadProductFormState extends State<UploadProductForm> {
       _priceController.clear();
       _titleController.clear();
       _descriptionController.clear();
+      _idController.clear();
       imagePathProvider.clearImages();
     }
 
@@ -209,6 +213,30 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       ),
                                       const SizedBox(height: 20),
                                       TextWidget(
+                                        text: 'Product ID*',
+                                        color: color,
+                                        isTitle: true,
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        width: 100,
+                                        child: TextFormField(
+                                          controller: _idController,
+                                          key: const ValueKey('ID'),
+                                          keyboardType: TextInputType.number,
+                                          validator: (value) {
+                                            if (value!.isEmpty) {
+                                              return 'No ID';
+                                            }
+                                            return null;
+                                          },
+                                          decoration: inputDecoration,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      TextWidget(
                                         text: 'Product category*',
                                         color: color,
                                         isTitle: true,
@@ -218,7 +246,8 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       _categoryDropDown(),
                                       const SizedBox(
                                         height: 20,
-                                      ),TextWidget(
+                                      ),
+                                      TextWidget(
                                         text: 'Product brand*',
                                         color: color,
                                         isTitle: true,

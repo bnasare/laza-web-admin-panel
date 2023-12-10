@@ -14,16 +14,28 @@ import '../widgets/header.dart';
 import '../widgets/orders_list.dart';
 import '../widgets/text_widget.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  late ProductProvider productProvider;
+
+  @override
+  void initState(){
+    super.initState();
+    productProvider =
+        Provider.of<ProductProvider>(context, listen: false);
+    productProvider.getProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
     Size size = Utils(context).getScreenSize;
     Color color = Utils(context).color;
-    final ProductProvider productProvider =
-        Provider.of<ProductProvider>(context, listen: false);
-    productProvider.getProducts();
     final List<ProductModel> products = productProvider.products;
     return SafeArea(
       child: SingleChildScrollView(
