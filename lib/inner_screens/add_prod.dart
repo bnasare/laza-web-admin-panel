@@ -218,7 +218,8 @@ class _UploadProductFormState extends State<UploadProductForm> {
                                       _categoryDropDown(),
                                       const SizedBox(
                                         height: 20,
-                                      ),TextWidget(
+                                      ),
+                                      TextWidget(
                                         text: 'Product brand*',
                                         color: color,
                                         isTitle: true,

@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:laza_web_admin_panel/models/product_model.dart';
-import 'package:laza_web_admin_panel/providers/product_provider.dart';
-import 'package:provider/provider.dart';
 
 import '../consts/constants.dart';
 import 'products_widget.dart';
 
 class ProductGridWidget extends StatelessWidget {
   const ProductGridWidget(
-      {Key? key,
+      {super.key,
       this.crossAxisCount = 4,
       this.childAspectRatio = 1,
       this.isInMain = true,
-      required this.products})
-      : super(key: key);
+      required this.products});
   final int crossAxisCount;
   final double childAspectRatio;
   final bool isInMain;
