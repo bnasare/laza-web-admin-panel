@@ -64,6 +64,14 @@ class _UploadProductFormState extends State<UploadProductForm> {
     final ImagePathProvider imagePathProvider =
         Provider.of<ImagePathProvider>(context, listen: false);
 
+    void clearForm() {
+      _priceController.clear();
+      _titleController.clear();
+      _descriptionController.clear();
+      _idController.clear();
+      imagePathProvider.clearImages();
+    }
+
     Future<void> uploadToFirebase() async {
       try {
         final String uuid = const Uuid().v4();
@@ -78,22 +86,23 @@ class _UploadProductFormState extends State<UploadProductForm> {
           'imagePaths': imagePathList,
         });
         log('Uploaded');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+          'Product uploaded',
+        )));
+        clearForm();
       } catch (error) {
         log('Error: $error');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+          'Something went wrong',
+        )));
       }
     }
 
     void uploadForm() async {
       final isValid = _formKey.currentState!.validate();
       await uploadToFirebase();
-    }
-
-    void clearForm() {
-      _priceController.clear();
-      _titleController.clear();
-      _descriptionController.clear();
-      _idController.clear();
-      imagePathProvider.clearImages();
     }
 
     var inputDecoration = InputDecoration(
